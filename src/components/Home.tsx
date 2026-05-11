@@ -43,10 +43,17 @@ const Home = () => {
     fetchDb,
     calculateTotalTime,
     updateDb,
+    entryDb,
   } = useFirebase();
   const modalEdit = useDisclosure();
+  const modalEntry = useDisclosure();
   const initialRef = useRef(null);
   const [editLearning, setEditLearning] = useState<StudyData>({
+    id: "",
+    title: "",
+    time: 0,
+  });
+  const [entryLearning, setEntryLearning] = useState<StudyData>({
     id: "",
     title: "",
     time: 0,
@@ -66,6 +73,28 @@ const Home = () => {
     if (!loading) {
       setTimeout(() => {
         modalEdit.onClose();
+      }, 500);
+    }
+  };
+
+  const handleEntry = async () => {
+    // クリック時、入力データの新規登録、もしくは既存データの更新を実施
+    if (learnings.some((l) => l.title === entryLearning.title)) {
+      const existingLesrning = learnings.find(
+        (l) => l.title === entryLearning.title
+      );
+      if (existingLesrning) {
+        existingLesrning.time += entryLearning.time;
+        await updateDb(existingLesrning);
+      }
+    } else {
+      await entryDb(entryLearning);
+    }
+    fetchDb(email);
+    setEntryLearning({ id: "", title: "", time: 0 });
+    if (!loading) {
+      setTimeout(() => {
+        modalEntry.onClose();
       }, 500);
     }
   };
@@ -223,12 +252,93 @@ const Home = () => {
                 <Button
                   colorScheme="green"
                   variant="outline"
-                  onClick={() => {}}
+                  onClick={modalEntry.onOpen}
                 >
                   新規データ登録
                 </Button>
               </Stack>
+              <Modal
+                initialFocusRef={initialRef}
+                isOpen={modalEntry.isOpen}
+                onClose={modalEntry.onClose}
+              >
+                <ModalOverlay />
+                <ModalContent>
+                  <ModalHeader>新規データ登録</ModalHeader>
+                  <ModalCloseButton />
+                  <ModalBody pb={6}>
+                    <FormControl>
+                      <FormLabel>学習内容</FormLabel>
+                      <Input
+                        ref={initialRef}
+                        name="newEntryTitle"
+                        placeholder="学習内容"
+                        value={entryLearning.title}
+                        onChange={(e) => {
+                          setEntryLearning({
+                            ...entryLearning,
+                            title: e.target.value,
+                          });
+                        }}
+                      />
+                    </FormControl>
+
+                    <FormControl mt={4}>
+                      <FormLabel>学習時間</FormLabel>
+                      <Input
+                        type="number"
+                        placeholder="学習時間"
+                        name="newEntryTime"
+                        value={entryLearning.time}
+                        onChange={(e) => {
+                          setEntryLearning({
+                            ...entryLearning,
+                            time: Number(e.target.value),
+                          });
+                        }}
+                      />
+                    </FormControl>
+                    <div>入力されている学習内容:{entryLearning.title}</div>
+                    <div>入力されている学習時間:{entryLearning.time}</div>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button
+                      isLoading={loading}
+                      loadingText="Loading"
+                      spinnerPlacement="start"
+                      colorScheme="green"
+                      mr={3}
+                      onClick={() => {
+                        if (
+                          entryLearning.title !== "" &&
+                          entryLearning.time > 0
+                        ) {
+                          handleEntry();
+                        } else {
+                          toast({
+                            title: "学習内容と時間を入力してください",
+                            position: "top",
+                            status: "error",
+                            duration: 2000,
+                            isClosable: true,
+                          });
+                        }
+                      }}
+                    >
+                      登録
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        modalEntry.onClose();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </ModalFooter>
+                </ModalContent>
+              </Modal>
             </Box>
+
             <Box px={25} mb={4}>
               <Stack spacing={3}>
                 <Button width="100%" variant="outline" onClick={() => {}}>

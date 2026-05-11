@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能
-import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../utils/firebase"; //Firebaseクライアントから認証機能のインポート
 import type { StudyData } from "../types/studyData";
 
@@ -21,6 +21,7 @@ type useFirebase = () => {
     fetchDb: (data: string) => Promise<void>
     calculateTotalTime: () => number
     updateDb: (data: StudyData) => Promise<void>
+    entryDb: (data: StudyData) => Promise<void>;
 }
 
 export const useFirebase: useFirebase = () => {
@@ -143,6 +144,40 @@ export const useFirebase: useFirebase = () => {
         }
     }
 
+    //Firestoreデータ新規登録
+    const entryDb = async (data: StudyData) => {
+        setLoading(true)
+        try {
+            const usersCollectionRef = collection(db, 'users_learnings');
+            const documentRef = await addDoc(usersCollectionRef, {
+                title: data.title,
+                time: data.time,
+                email: email
+            });
+            console.log(documentRef, data);
+            toast({
+                title: 'データ登録が完了しました',
+                position: 'top',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+            })
+        }
+        catch (error) {
+            console.error("Error adding document:", error);
+            toast({
+                title: 'データ登録に失敗しました',
+                description: `${error}`,
+                position: 'top',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
+
     //学習時間合計
     const calculateTotalTime = () => {
         return learnings.reduce((total, learning) => total + learning.time, 0);
@@ -162,6 +197,7 @@ export const useFirebase: useFirebase = () => {
         setLearnings,
         fetchDb,
         calculateTotalTime,
-        updateDb
+        updateDb,
+        entryDb
     }
 }

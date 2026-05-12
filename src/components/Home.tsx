@@ -44,9 +44,11 @@ const Home = () => {
     calculateTotalTime,
     updateDb,
     entryDb,
+    deleteDb,
   } = useFirebase();
   const modalEdit = useDisclosure();
   const modalEntry = useDisclosure();
+  const modalDelete = useDisclosure();
   const initialRef = useRef(null);
   const [editLearning, setEditLearning] = useState<StudyData>({
     id: "",
@@ -54,6 +56,11 @@ const Home = () => {
     time: 0,
   });
   const [entryLearning, setEntryLearning] = useState<StudyData>({
+    id: "",
+    title: "",
+    time: 0,
+  });
+  const [deleteLearning, setDeleteLearning] = useState<StudyData>({
     id: "",
     title: "",
     time: 0,
@@ -95,6 +102,16 @@ const Home = () => {
     if (!loading) {
       setTimeout(() => {
         modalEntry.onClose();
+      }, 500);
+    }
+  };
+
+  const handleDelete = async () => {
+    await deleteDb(deleteLearning);
+    fetchDb(email);
+    if (!loading) {
+      setTimeout(() => {
+        modalDelete.onClose();
       }, 500);
     }
   };
@@ -232,9 +249,49 @@ const Home = () => {
                           </Modal>
                         </Td>
                         <Td>
-                          <Button variant="ghost">
+                          {/* データ削除のモーダル */}
+                          <Button
+                            variant="ghost"
+                            onClick={() => {
+                              setDeleteLearning(learning);
+                              modalDelete.onOpen();
+                            }}
+                          >
                             <MdDelete color="black" />
                           </Button>
+                          <Modal
+                            isOpen={modalDelete.isOpen}
+                            onClose={modalDelete.onClose}
+                          >
+                            <ModalOverlay />
+                            <ModalContent>
+                              <ModalHeader>データ削除</ModalHeader>
+                              <ModalCloseButton />
+                              <ModalBody pb={6}>
+                                <Box>
+                                  以下のデータを削除します。
+                                  <br />
+                                  学習内容：{deleteLearning.title}、学習時間：
+                                  {deleteLearning.time}
+                                </Box>
+                              </ModalBody>
+                              <ModalFooter>
+                                <Button onClick={modalDelete.onClose} mr={3}>
+                                  Cancel
+                                </Button>
+                                <Button
+                                  isLoading={loading}
+                                  loadingText="Loading"
+                                  spinnerPlacement="start"
+                                  ref={initialRef}
+                                  colorScheme="red"
+                                  onClick={handleDelete}
+                                >
+                                  削除
+                                </Button>
+                              </ModalFooter>
+                            </ModalContent>
+                          </Modal>
                         </Td>
                       </Tr>
                     ))}

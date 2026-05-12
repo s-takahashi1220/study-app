@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能
-import { addDoc, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../utils/firebase"; //Firebaseクライアントから認証機能のインポート
 import type { StudyData } from "../types/studyData";
 
@@ -21,7 +21,8 @@ type useFirebase = () => {
     fetchDb: (data: string) => Promise<void>
     calculateTotalTime: () => number
     updateDb: (data: StudyData) => Promise<void>
-    entryDb: (data: StudyData) => Promise<void>;
+    entryDb: (data: StudyData) => Promise<void>
+    deleteDb: (data: StudyData) => Promise<void>;
 }
 
 export const useFirebase: useFirebase = () => {
@@ -178,6 +179,36 @@ export const useFirebase: useFirebase = () => {
         }
     }
 
+    //Firestoreデータ削除
+    const deleteDb = async (data: StudyData) => {
+        setLoading(true);
+        try {
+            const userDocmentRef = doc(db, 'users_learnings', data.id);
+            await deleteDoc(userDocmentRef);
+            toast({
+                title: 'データを削除しました',
+                position: 'top',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+            })
+        }
+        catch (error) {
+            console.error("Error during delete:", error);
+            toast({
+                title: 'データの削除に失敗しました',
+                description: `${error}`,
+                position: 'top',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+            })
+        }
+        finally {
+            setLoading(false);
+        }
+    }
+
     //学習時間合計
     const calculateTotalTime = () => {
         return learnings.reduce((total, learning) => total + learning.time, 0);
@@ -198,6 +229,7 @@ export const useFirebase: useFirebase = () => {
         fetchDb,
         calculateTotalTime,
         updateDb,
-        entryDb
+        entryDb,
+        deleteDb
     }
 }

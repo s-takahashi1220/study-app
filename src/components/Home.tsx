@@ -27,6 +27,13 @@ import {
   Tr,
   useDisclosure,
   useToast,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogCloseButton,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 
 import { FiEdit } from "react-icons/fi";
@@ -45,11 +52,14 @@ const Home = () => {
     updateDb,
     entryDb,
     deleteDb,
+    handleLogout,
   } = useFirebase();
   const modalEdit = useDisclosure();
   const modalEntry = useDisclosure();
   const modalDelete = useDisclosure();
+  const alertLogout = useDisclosure();
   const initialRef = useRef(null);
+  const cancelref = useRef(null);
   const [editLearning, setEditLearning] = useState<StudyData>({
     id: "",
     title: "",
@@ -396,13 +406,47 @@ const Home = () => {
               </Modal>
             </Box>
 
+            {/* ログアウトアラート*/}
             <Box px={25} mb={4}>
               <Stack spacing={3}>
-                <Button width="100%" variant="outline" onClick={() => {}}>
+                <Button
+                  width="100%"
+                  variant="outline"
+                  onClick={alertLogout.onOpen}
+                >
                   ログアウト
                 </Button>
+                <AlertDialog
+                  motionPreset="slideInBottom"
+                  leastDestructiveRef={cancelref}
+                  onClose={alertLogout.onClose}
+                  isOpen={alertLogout.isOpen}
+                  isCentered
+                >
+                  <AlertDialogOverlay />
+                  <AlertDialogContent>
+                    <AlertDialogHeader>ログアウト</AlertDialogHeader>
+                    <AlertDialogCloseButton />
+                    <AlertDialogBody>ログアウトしますか?</AlertDialogBody>
+                    <AlertDialogFooter>
+                      <Button ref={cancelref} onClick={alertLogout.onClose}>
+                        cancel
+                      </Button>
+                      <Button
+                        isLoading={loading}
+                        loadingText="Loading"
+                        spinnerPlacement="start"
+                        colorScheme="red"
+                        onClick={handleLogout}
+                      >
+                        ログアウト
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </Stack>
             </Box>
+
             <Box px={25} mb={4}>
               <Stack spacing={3}>
                 <Button width="100%" variant="outline" onClick={() => {}}>

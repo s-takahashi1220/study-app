@@ -13,11 +13,13 @@ import {
 import { FaUserCheck } from "react-icons/fa";
 import { RiLockPasswordFill } from "react-icons/ri";
 import { useFirebase } from "../hooks/useFirebase";
+import { useNavigate } from "react-router-dom";
 import type React from "react";
 
 const Login = () => {
   const { loading, email, setEmail, password, setPassword, handleLogin } =
     useFirebase();
+  const navigate = useNavigate();
   return (
     <>
       <Flex justifyContent="center" boxSize="fit-content" mx="auto" p={5}>
@@ -76,7 +78,7 @@ const Login = () => {
                   colorScheme="green"
                   width="100%"
                   variant="outline"
-                  onClick={() => {}}
+                  onClick={() => navigate("/register")}
                 >
                   新規登録
                 </Button>

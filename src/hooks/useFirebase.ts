@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
-import { signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, type User } from "firebase/auth"; //FirebaseSDKのemailログイン機能
 import { addDoc, collection, deleteDoc, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { auth, db } from "../utils/firebase"; //Firebaseクライアントから認証機能のインポート
 import type { StudyData } from "../types/studyData";
@@ -24,6 +24,9 @@ type useFirebase = () => {
     entryDb: (data: StudyData) => Promise<void>
     deleteDb: (data: StudyData) => Promise<void>;
     handleLogout: () => Promise<void>
+    passwordConf: string
+    setPasswordConf: React.Dispatch<React.SetStateAction<string>>
+    handleSignup: (e: React.SubmitEvent<HTMLFormElement>) => Promise<void>
 }
 
 export const useFirebase: useFirebase = () => {
@@ -31,6 +34,7 @@ export const useFirebase: useFirebase = () => {
     const [loading, setLoading] = useState(false); //ローディング状態を管理するstateの定義
     const [email, setEmail] = useState(''); //emailを管理
     const [password, setPassword] = useState(''); //passwordを管理
+    const [passwordConf, setPasswordConf] = useState(''); //password確認用
     const [user, setUser] = useState<User | null>(null); //セッションユーザ情報のステート追加
     const [learnings, setLearnings] = useState<StudyData[]>([]); //学習記録データのステート追加
     const navigate = useNavigate() //React RouterのNavigate機能
@@ -111,6 +115,59 @@ export const useFirebase: useFirebase = () => {
             console.error('Error during logout:', error);
             toast({
                 title: 'ログアウトに失敗しました',
+                description: `${error}`,
+                position: 'top',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+            })
+        }
+        finally {
+            setLoading(false);
+        }
+    }
+
+    // サインアップ処理
+    const handleSignup = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (password !== passwordConf) {
+            toast({
+                title: 'パスワードが一致しません',
+                position: 'top',
+                status: 'error',
+                duration: 2000,
+                isClosable: true,
+            })
+            return;
+        } else if (password.length < 6) {
+            toast({
+                title: 'パスワードは6文字以上にしてください',
+                position: 'top',
+                status: 'error',
+                duration: 2000,
+                isClosable: true,
+            })
+            return;
+        }
+        try {
+            setLoading(true);
+            // Firebaseにユーザーを作成する処理
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            console.log("User Created:", userCredential);
+            toast({
+                title: 'ユーザー登録が完了しました',
+                position: 'top',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+            })
+            navigate('/login'); //ユーザー登録後、ログイン画面に遷移
+        }
+        catch (error) {
+            console.error("Error during sign up", error);
+            toast({
+                title: 'サインアップに失敗しました',
                 description: `${error}`,
                 position: 'top',
                 status: 'error',
@@ -263,6 +320,9 @@ export const useFirebase: useFirebase = () => {
         updateDb,
         entryDb,
         deleteDb,
-        handleLogout
+        handleLogout,
+        passwordConf,
+        setPasswordConf,
+        handleSignup
     }
 }
